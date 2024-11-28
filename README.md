@@ -109,11 +109,11 @@ return (totalShoperiaPlusSubscriptions, shoperiaPlusSubscriptionsInPeriod);
 ```csharp
 var query = from order in _orderRepository.Table
             join shipment in _shipmentRepository.Table on order.Id equals shipment.OrderId
-            where order.OrderStatusId == 50 // Csak a törölt státuszú rendelések
-                  && shipment.DeliveryDateUtc != null // Csak a szállítással rendelkező rendelések
+            where order.OrderStatusId == 40 // Cancelled
+                  && shipment.DeliveryDateUtc != null 
                   && (!createdFromUtc.HasValue || shipment.DeliveryDateUtc >= createdFromUtc.Value)
                   && (!createdToUtc.HasValue || shipment.DeliveryDateUtc <= createdToUtc.Value)
-            select order.Id; // Csak az érintett rendelés ID-k
+            select order.Id
 
 // Visszaadjuk az érintett rendelések számát
 return await query.Distinct().CountAsync();
