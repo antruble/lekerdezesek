@@ -48,18 +48,20 @@ public async Task<bool> IsReturningCustomerAsync(int customerId, Guid orderGuid)
 ### Az időszak során felhasznált kuponok típusa, az egyes típusok totál felhasználási száma és totál kedvezménye
 
 ```csharp
-// Lekérdezzük a DiscountUsageHistory és Order adatokat, majd csoportosítjuk a DiscountTypeId alapján
 var query = from duh in _discountUsageHistoryRepository.Table
             join o in _orderRepository.Table on duh.OrderId equals o.Id
             join d in _discountRepository.Table on duh.DiscountId equals d.Id
+            join oi in _orderItemRepository.Table on duh.OrderId equals oi.OrderId
             where (!createdFromUtc.HasValue || duh.CreatedOnUtc >= createdFromUtc.Value) &&
                   (!createdToUtc.HasValue || duh.CreatedOnUtc <= createdToUtc.Value)
-            group new { duh, o, d } by d.DiscountTypeId into g
+            group new { duh, o, d, oi } by d.DiscountTypeId into g
             select new DiscountReportModel
             {
-                DiscountTypeName = ((DiscountType)g.Key).ToString(),  // A kupon típus azonosítója
-                UsageCount = g.Count(),  // Felhasználási számok összege
-                TotalDiscountAmount = g.Sum(x => x.o.OrderSubTotalDiscountInclTax) + g.Sum(x => x.d.DiscountAmount) // Kedvezmény összegzése
+                DiscountTypeName = ((DiscountType)g.Key).ToString(), 
+                UsageCount = g.Count(),  
+                TotalDiscountAmount =  g.Sum(x => x.o.OrderSubTotalDiscountInclTax) + 
+                                       g.Sum(x => x.d.DiscountAmount) + 
+                                       g.Sum(x => x.oi.DiscountAmountExclTax)
             };
 
 var result = await query.ToListAsync();
